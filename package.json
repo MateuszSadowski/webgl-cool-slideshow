@@ -1,0 +1,15 @@
+{
+  "name": "webgl-cool-slideshow",
+  "version": "1.0.0",
+  "description": "Slideshow with cool animations made with WebGL",
+  "main": "src/index.js",
+  "author": "Mateusz Sadowski",
+  "license": "MIT",
+  "dependencies": {
+    "three": "^0.111.0"
+  },
+  "devDependencies": {
+    "webpack": "^4.41.4",
+    "webpack-cli": "^3.3.10"
+  }
+}
