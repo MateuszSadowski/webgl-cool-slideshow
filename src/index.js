@@ -1,24 +1,32 @@
 import * as THREE from "three";
 
-let scene = new THREE.Scene();
-let camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+const screenRatio = window.innerWidth / window.innerHeight;
+const imageSize = 1;
 
-let renderer = new THREE.WebGLRenderer();
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(75, screenRatio, 0.1, 1000);
+
+const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-let geometry = new THREE.BoxGeometry(1, 1, 1);
-let material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-let cube = new THREE.Mesh(geometry, material);
-scene.add(cube);
+const loader = new THREE.TextureLoader();
 
-camera.position.z = 5;
+let plane, planeMaterial;
+let planeGeometry = new THREE.PlaneBufferGeometry(imageSize * screenRatio, imageSize);
+loader.load(
+    "textures/IMG_6831.jpeg",
+    (texture) => {
+        planeMaterial = new THREE.MeshBasicMaterial({ map: texture });
+        plane = new THREE.Mesh(planeGeometry, planeMaterial);
+        scene.add(plane);
+    }
+)
 
-let animate = function () {
+camera.position.z = 0.5;
+
+const animate = function () {
     requestAnimationFrame(animate);
-
-    cube.rotation.x += 0.01;
-    cube.rotation.y += 0.01;
 
     renderer.render(scene, camera);
 };
