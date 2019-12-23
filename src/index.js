@@ -1,8 +1,11 @@
 import * as THREE from "three";
 
 // === Init ===
+const SLIDE_STEP = 0.01;
+
 const screenRatio = window.innerWidth / window.innerHeight;
 const imageSize = 1;
+let slideProgress = 0.0;
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(75, screenRatio, 0.1, 1000);
@@ -13,13 +16,14 @@ document.body.appendChild(renderer.domElement);
 
 const loader = new THREE.TextureLoader();
 let texture1 = loader.load("textures/IMG_6831.jpeg");
-let texture2 = loader.load("textures/IMG_6899.jpeg");;
+let texture2 = loader.load("textures/IMG_6899.jpeg");
 
 const planeGeometry = new THREE.PlaneBufferGeometry(imageSize * screenRatio, imageSize);
 
 const uniforms = {
-    texture1: { value: texture1 },
-    texture2: { value: texture2 }
+    uTexture1: { value: texture1 },
+    uTexture2: { value: texture2 },
+    uSlideProgress: { value: slideProgress }
 };
 
 const planeMaterial = new THREE.ShaderMaterial({
@@ -27,6 +31,7 @@ const planeMaterial = new THREE.ShaderMaterial({
     fragmentShader: fragmentShader(),
     vertexShader: vertexShader()
 });
+
 
 const plane = new THREE.Mesh(planeGeometry, planeMaterial);
 scene.add(plane);
@@ -40,11 +45,11 @@ animate();
 function vertexShader() {
     return `
         varying vec2 vUv; 
-        varying vec3 pos;
+        varying vec3 vPos;
 
         void main() {
             vUv = uv; 
-            pos = position;
+            vPos = position;
 
             vec4 modelViewPosition = modelViewMatrix * vec4(position, 1.0);
             gl_Position = projectionMatrix * modelViewPosition; 
@@ -54,15 +59,17 @@ function vertexShader() {
 
 function fragmentShader() {
     return `
-        uniform sampler2D texture1; 
-        uniform sampler2D texture2; 
+        uniform sampler2D uTexture1; 
+        uniform sampler2D uTexture2;
+        uniform float uSlideProgress;
         varying vec2 vUv;
-        varying vec3 pos;
+        varying vec3 vPos;
 
         void main() {
-            vec4 color1 = texture2D(texture1, vUv);
-            vec4 color2 = texture2D(texture2, vUv);
-            vec4 fColor = mix(color1, color2, pos.y);
+            vec4 color1 = texture2D(uTexture1, vUv);
+            vec4 color2 = texture2D(uTexture2, vUv);
+            float step = uSlideProgress * vPos.x - vUv.y * vPos.y + vUv.x * vPos.z;
+            vec4 fColor = mix(color1, color2, step);
             fColor.a = 1.0;
             gl_FragColor = fColor;
         }
@@ -71,6 +78,13 @@ function fragmentShader() {
 
 function animate() {
     renderer.render(scene, camera);
+
+    if(uniforms.uSlideProgress.value >= 1.0) {
+        uniforms.uSlideProgress.value = 0.0;
+    } else {
+        uniforms.uSlideProgress.value += SLIDE_STEP;
+    }
+    console.log(uniforms.uSlideProgress.value);
 
     requestAnimationFrame(animate);
 };
