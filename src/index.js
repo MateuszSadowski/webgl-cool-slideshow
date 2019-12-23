@@ -1,5 +1,6 @@
 import * as THREE from "three";
 
+// === Init ===
 const screenRatio = window.innerWidth / window.innerHeight;
 const imageSize = 1;
 
@@ -11,25 +12,32 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
 const loader = new THREE.TextureLoader();
+let texture1 = loader.load("textures/IMG_6831.jpeg");
+let texture2 = loader.load("textures/IMG_6899.jpeg");;
 
-let shadersSetUp = false;
-let texture1, texture2;
 const planeGeometry = new THREE.PlaneBufferGeometry(imageSize * screenRatio, imageSize);
 
-loader.load(
-    "textures/IMG_6831.jpeg",
-    (texture) => {
-        texture1 = texture;
-    }
-)
-loader.load(
-    "textures/IMG_6899.jpeg",
-    (texture) => {
-        texture2 = texture;
-    }
-)
+const uniforms = {
+    texture1: { value: texture1 },
+    texture2: { value: texture2 }
+};
 
-const vertexShader = () => {
+const planeMaterial = new THREE.ShaderMaterial({
+    uniforms: uniforms,
+    fragmentShader: fragmentShader(),
+    vertexShader: vertexShader()
+});
+
+const plane = new THREE.Mesh(planeGeometry, planeMaterial);
+scene.add(plane);
+
+camera.position.z = 0.5;
+
+// === Start app ===
+animate();
+
+// === Functions ===
+function vertexShader() {
     return `
         varying vec2 vUv; 
         varying vec3 pos;
@@ -44,7 +52,7 @@ const vertexShader = () => {
     `;
 }
 
-const fragmentShader = () => {
+function fragmentShader() {
     return `
         uniform sampler2D texture1; 
         uniform sampler2D texture2; 
@@ -61,32 +69,8 @@ const fragmentShader = () => {
     `;
 }
 
-camera.position.z = 0.5;
-
-const animate = () => {
-    if (texture1 && texture2) {
-        if (!shadersSetUp) {
-            const uniforms = {
-                texture1: { value: texture1 },
-                texture2: { value: texture2 }
-            };
-
-            const planeMaterial = new THREE.ShaderMaterial({
-                uniforms: uniforms,
-                fragmentShader: fragmentShader(),
-                vertexShader: vertexShader()
-            });
-
-            const plane = new THREE.Mesh(planeGeometry, planeMaterial);
-            scene.add(plane);
-
-            shadersSetUp = true;
-        }
-
-        renderer.render(scene, camera);
-    }
+function animate() {
+    renderer.render(scene, camera);
 
     requestAnimationFrame(animate);
 };
-
-animate();
