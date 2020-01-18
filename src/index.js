@@ -15,8 +15,8 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
 const loader = new THREE.TextureLoader();
-let texture1 = loader.load("textures/IMG_6831.jpeg");
-let texture2 = loader.load("textures/IMG_6899.jpeg");
+let texture1 = loader.load("textures/IMG_6899.jpeg");
+let texture2 = loader.load("textures/IMG_1355.jpeg");
 
 const planeGeometry = new THREE.PlaneBufferGeometry(imageSize * screenRatio, imageSize);
 
@@ -49,7 +49,7 @@ function vertexShader() {
 
         void main() {
             vUv = uv; 
-            vPos = position;
+            vPos = position + 0.5; //map to range [0,1]
 
             vec4 modelViewPosition = modelViewMatrix * vec4(position, 1.0);
             gl_Position = projectionMatrix * modelViewPosition; 
@@ -59,6 +59,8 @@ function vertexShader() {
 
 function fragmentShader() {
     return `
+        #define SLIDE_FALLOFF 0.05
+
         uniform sampler2D uTexture1; 
         uniform sampler2D uTexture2;
         uniform float uSlideProgress;
@@ -68,7 +70,9 @@ function fragmentShader() {
         void main() {
             vec4 color1 = texture2D(uTexture1, vUv);
             vec4 color2 = texture2D(uTexture2, vUv);
-            float step = uSlideProgress * vPos.x - vUv.y * vPos.y + vUv.x * vPos.z;
+            float progress = 1.0 - uSlideProgress;
+            //float step = uSlideProgress * vPos.x - vUv.y * vPos.y + vUv.x * vPos.z;
+            float step = smoothstep(progress - SLIDE_FALLOFF, progress + SLIDE_FALLOFF, vPos.y);
             vec4 fColor = mix(color1, color2, step);
             fColor.a = 1.0;
             gl_FragColor = fColor;
@@ -79,12 +83,11 @@ function fragmentShader() {
 function animate() {
     renderer.render(scene, camera);
 
-    if(uniforms.uSlideProgress.value >= 1.0) {
+    if (uniforms.uSlideProgress.value >= 1.0) {
         uniforms.uSlideProgress.value = 0.0;
     } else {
         uniforms.uSlideProgress.value += SLIDE_STEP;
     }
-    console.log(uniforms.uSlideProgress.value);
 
     requestAnimationFrame(animate);
 };
